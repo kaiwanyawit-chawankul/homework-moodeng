@@ -10,7 +10,7 @@ Goals
 
 
 TODO:
-
+ - [ ] Learning Scala
  - [ ] Create an app
  - [ ] Create infra
  - [ ] xxx
