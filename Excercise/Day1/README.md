@@ -44,3 +44,27 @@ sbt:hello>
 
 # .gitignore
 https://github.com/scala/scala/blob/2.13.x/.gitignore
+
+
+# from scratch (like create npm)
+https://www.scala-sbt.org/1.x/docs/sbt-by-example.html
+
+- create a folder
+- create file (touch build.sbt)
+- create project by run (sbt)
+- create class  Excercise/Day1/from-scratch/src/main/scala/example/Hello.scala
+- run (sbt > run)
+- update build.sbt (sbt > set ThisBuild / scalaVersion := "2.13.12")
+- save (sbt > session save)
+- update project name
+- add test and run
+- add watch for test (sbt > ~testQuick)
+- add test and see fail test(src/test/scala/example/HelloSuite.scala)
+- add more lib to allow us to paste a code into console
+- add sub projects
+- add test on sub project and link the build command
+- add reference to sub project
+
+# PARK HERE
+Hello! The current temperature in New York is 22.7 C.
+
