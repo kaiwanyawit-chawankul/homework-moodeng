@@ -43,7 +43,7 @@ object Main {
             `Access-Control-Allow-Origin`.*, // Allow all origins (for development)
           ) {
             entity(as[String]) { activity =>
-              complete(s"Received mouse activity: $activity")
+              complete(activity)
             }
           }
         }
