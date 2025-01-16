@@ -44,3 +44,49 @@ https://github.com/sbt/docker-sbt?tab=readme-ov-file
 sbt-assembly is a very simple plugin that can be used to create jar files for your scala application. Let's look at it with an example. First of all, we need to create a simple sbt project. In the plugins.sbt , add the sbt-assembly dependency as: addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.1.0")
 
 Different Ways To Package A Simple Scala App - GitHub
+
+
+It's great you're building a mouse tracking system! Using Kafka, Redis, and Cassandra together can create a robust and scalable solution, but it's important to understand how each technology fits into the architecture. Here's a breakdown of how you might use them:
+
+1. Kafka: The Data Pipeline Hub
+
+Ingestion: Mouse events (clicks, movements, scrolls) are sent from the client-side (web browser, application) to Kafka topics. Kafka acts as a central nervous system, efficiently handling high-volume, real-time data streams.  
+Decoupling: Kafka decouples the data producers (clients) from the consumers (processing and storage systems). This provides fault tolerance and scalability. If one consumer goes down, the data is still safely stored in Kafka.  
+Stream Processing: You can use stream processing frameworks like Kafka Streams or Apache Flink to perform real-time analysis on the mouse event data within Kafka. This could include:
+Aggregating click counts per page.
+Detecting user behavior patterns.
+Generating real-time heatmaps.
+ 
+2. Redis: Real-time Insights and Caching
+
+Real-time Dashboards: Store aggregated metrics (e.g., clicks per minute, active users) in Redis for very fast retrieval and display on real-time dashboards. Redis's in-memory data store makes it ideal for this purpose.
+Session Tracking: Store temporary user session data related to mouse activity. This can be useful for features like:
+Highlighting recently clicked elements.
+Personalizing user experience based on recent interactions.
+Caching: Cache frequently accessed data or pre-computed results in Redis to reduce load on Cassandra or other downstream systems.  
+3. Cassandra: Long-Term Storage and Analysis
+
+Persistent Storage: Store the raw mouse event data in Cassandra for long-term storage and historical analysis. Cassandra is well-suited for this due to its:
+High write throughput.
+Scalability and fault tolerance.
+Ability to handle large volumes of time-series data.
+Batch Analytics: Perform batch analytics on the historical data in Cassandra to identify trends, user behavior patterns, and long-term insights. This could involve:
+Analyzing user journeys and navigation patterns.
+Identifying areas of user confusion or frustration.
+Optimizing website or application design.
+Data Flow Example:
+
+Mouse Events -> Kafka: Mouse events are sent to a Kafka topic (e.g., "mouse-events").
+Kafka Streams/Flink -> Redis: A stream processing application consumes data from Kafka, aggregates metrics (e.g., clicks per page, active users), and stores the results in Redis.
+Kafka Connect/Custom Consumer -> Cassandra: Data from Kafka is persisted to Cassandra for long-term storage. You can use Kafka Connect for this or write a custom consumer application.
+Dashboards/Applications -> Redis: Real-time dashboards and applications query Redis to display up-to-the-second metrics.
+Analytics Tools -> Cassandra: Analytics tools (e.g., Spark, Hive) query Cassandra for historical analysis.  
+Choosing the Right Data:
+
+Kafka: Raw, high-volume mouse events (for real-time processing and decoupling).
+Redis: Aggregated metrics, session data, cached results (for real-time insights and performance).  
+Cassandra: Raw mouse events (for long-term storage and historical analysis).
+By using Kafka, Redis, and Cassandra in this way, you can create a powerful and scalable mouse tracking system that provides both real-time insights and long-term analytical capabilities.
+
+
+https://github.com/conduktor/kafka-stack-docker-compose/blob/master/full-stack.yml
