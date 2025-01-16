@@ -1,0 +1,11 @@
+# Use official Nginx image
+FROM nginx:alpine
+
+# Copy your static files into Nginx's default serving location
+COPY ./static /usr/share/nginx/html
+
+# Copy the custom nginx configuration file
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+# Expose port 80 for the web server
+EXPOSE 80

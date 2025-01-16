@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Activity Tracker</title>
+</head>
+<body>
+    <h1>Mouse Activity Tracker</h1>
+    <p>Move your mouse and click to track activity.</p>
+
+    <script>
+        // Function to send mouse activity to the Scala backend
+        const sendMouseActivity = (eventType, data) => {
+            fetch('http://localhost:8080/mouse-activity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    eventType: eventType,
+                    data: data,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => console.log('Activity logged:', data))
+            .catch(error => console.error('Error:', error));
+        };
+
+        // Detect mouse movement
+        document.addEventListener('mousemove', (e) => {
+            const mouseData = {
+                x: e.clientX,
+                y: e.clientY,
+                timestamp: new Date().toISOString(),
+            };
+            sendMouseActivity('mousemove', mouseData);
+        });
+
+        // Detect mouse click
+        document.addEventListener('click', (e) => {
+            const mouseData = {
+                x: e.clientX,
+                y: e.clientY,
+                button: e.button, // 0 = left, 1 = middle, 2 = right
+                timestamp: new Date().toISOString(),
+            };
+            sendMouseActivity('click', mouseData);
+        });
+    </script>
+</body>
+</html>

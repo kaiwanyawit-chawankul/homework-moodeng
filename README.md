@@ -10,6 +10,7 @@ Goals
 
 
 TODO:
+ - [ ] Learning sbt
  - [ ] Learning Scala
  - [ ] Create an app
  - [ ] Create infra
