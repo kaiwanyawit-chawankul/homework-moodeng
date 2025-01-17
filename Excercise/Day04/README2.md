@@ -90,3 +90,21 @@ By using Kafka, Redis, and Cassandra in this way, you can create a powerful and 
 
 
 https://github.com/conduktor/kafka-stack-docker-compose/blob/master/full-stack.yml
+
+https://goangle.medium.com/%E0%B8%9A%E0%B8%B1%E0%B8%99%E0%B8%97%E0%B8%B6%E0%B8%81%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%87%E0%B8%B2%E0%B8%99-apache-kafka-%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B9%80%E0%B8%A3%E0%B9%88%E0%B8%87%E0%B8%A3%E0%B8%B1%E0%B8%94-bde60223ff8a
+
+uuidgen
+echo -n "a366e709-d378-40f0-8c36-a6e705ac5b49" | base64
+
+
+
+
+docker exec -it kafka bash
+
+/usr/bin/kafka-topics --create --topic test-topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+/usr/bin/kafka-console-producer --broker-list localhost:9092 --topic test-topic
+
+/usr/bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test-topic --from-beginning
+
+/usr/bin/kafka-topics --list --bootstrap-server localhost:9092
