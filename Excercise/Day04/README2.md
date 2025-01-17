@@ -108,3 +108,8 @@ docker exec -it kafka bash
 /usr/bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test-topic --from-beginning
 
 /usr/bin/kafka-topics --list --bootstrap-server localhost:9092
+
+
+docker exec -it cassandra cqlsh
+
+DESCRIBE TABLES;
