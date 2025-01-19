@@ -10,6 +10,10 @@
     <p>Move your mouse and click to track activity.</p>
 
     <script>
+        let mousePositions = [];
+        let lastRecordedTime = 0;
+        const recordingInterval = 16; // Record approximately every 16ms (close to 60fps)
+
         // Function to send mouse activity to the Scala backend
         const sendMouseActivity = (eventType, data) => {
             fetch('http://localhost:8080/mouse-activity', {
@@ -27,14 +31,33 @@
             .catch(error => console.error('Error:', error));
         };
 
-        // Detect mouse movement
-        document.addEventListener('mousemove', (e) => {
-            const mouseData = {
-                x: e.clientX,
-                y: e.clientY,
-                timestamp: new Date().toISOString(),
-            };
-            sendMouseActivity('mousemove', mouseData);
+        // // Detect mouse movement
+        // document.addEventListener('mousemove', (e) => {
+        //     const mouseData = {
+        //         x: e.clientX,
+        //         y: e.clientY,
+        //         timestamp: new Date().toISOString(),
+        //     };
+        //     sendMouseActivity('mousemove', mouseData);
+        // });
+
+        document.addEventListener('mousemove', (event) => {
+            const currentTime = Date.now(); // More common than performance.now for this use case
+
+            if (currentTime - lastRecordedTime >= recordingInterval) {
+                mousePositions.push({
+                x: event.clientX,
+                y: event.clientY,
+                time: currentTime,
+                });
+                lastRecordedTime = currentTime;
+
+                // Optional: Log the recorded position to the console
+                console.log("Recorded position:", mousePositions[mousePositions.length - 1]);
+
+                // Optional: Do something with the recorded positions (e.g., send to server)
+                // processMousePositions(); // See example below
+            }
         });
 
         // Detect mouse click
@@ -46,6 +69,31 @@
                 timestamp: new Date().toISOString(),
             };
             sendMouseActivity('click', mouseData);
+        });
+
+        // Example of processing the collected data (e.g., sending it to a server)
+        function processMousePositions() {
+            if (mousePositions.length > 0) {
+                sendMouseActivity('mousemove', mousePositions);
+                // Clear the array after sending data
+                mousePositions = [];
+            }
+        }
+
+        // Example of setting an interval to process data every 5 seconds
+        setInterval(processMousePositions, 5000); // Process every 5 seconds
+
+        // Optional: Display the current mouse position in real-time
+        const mousePositionDisplay = document.createElement('div');
+        mousePositionDisplay.style.position = 'fixed';
+        mousePositionDisplay.style.top = '10px';
+        mousePositionDisplay.style.left = '10px';
+        mousePositionDisplay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+        mousePositionDisplay.style.padding = '5px';
+        document.body.appendChild(mousePositionDisplay);
+
+        document.addEventListener('mousemove', (event) => {
+            mousePositionDisplay.textContent = `Mouse: x=${event.clientX}, y=${event.clientY}`;
         });
     </script>
 </body>

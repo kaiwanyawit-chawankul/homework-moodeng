@@ -43,6 +43,8 @@ object Main {
             `Access-Control-Allow-Origin`.*, // Allow all origins (for development)
           ) {
             entity(as[String]) { activity =>
+              //log.info(s"Mouse activity: eventType=$eventType, data=$data")
+              //log.info(s"tracking: activity=$activity")
               complete(activity)
             }
           }

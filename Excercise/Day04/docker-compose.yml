@@ -100,16 +100,6 @@ services:
     networks:
       - analytics-net
 
-  # processing-service:
-  #   image: processing-service:latest
-  #   container_name: processing-service
-  #   depends_on:
-  #     - kafka
-  #     - cassandra
-  #     - redis
-  #   networks:
-  #     - analytics-net
-
   processing-backend:
     build:
       context: ./consumer
