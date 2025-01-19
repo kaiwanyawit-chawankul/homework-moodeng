@@ -82,23 +82,23 @@ services:
   #   networks:
   #     - analytics-net
 
-  cassandra:
-    image: cassandra:latest
-    container_name: cassandra
-    ports:
-      - "9042:9042"
-    volumes:
-      - ./cassandra-data:/var/lib/cassandra
-    networks:
-      - analytics-net
-
-  # redis:
-  #   image: redis:latest
-  #   container_name: redis
+  # cassandra:
+  #   image: cassandra:latest
+  #   container_name: cassandra
   #   ports:
-  #     - "6379:6379"
+  #     - "9042:9042"
+  #   volumes:
+  #     - ./cassandra-data:/var/lib/cassandra
   #   networks:
   #     - analytics-net
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - analytics-net
 
   # processing-service:
   #   image: processing-service:latest
@@ -107,6 +107,34 @@ services:
   #     - kafka
   #     - cassandra
   #     - redis
+  #   networks:
+  #     - analytics-net
+
+  processing-backend:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile.consumer  # Make sure this points to the Dockerfile for the Scala app
+    container_name: processing-backend
+    ports:
+      - "8081:8081"  # Expose the Scala backend on port 8080
+    # depends_on:
+    #   - kafka
+    #   - redis
+    #   - cassandra
+    networks:
+      - analytics-net
+
+  # processing-backend2:
+  #   build:
+  #     context: ./consumer2
+  #     dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Kotlin app
+  #   container_name: processing-backend2
+  #   ports:
+  #     - "8082:8082"  # Expose the Kotlin backend on port 8082
+  #   # depends_on:
+  #   #   - kafka
+  #   #   - redis
+  #   #   - cassandra
   #   networks:
   #     - analytics-net
 
