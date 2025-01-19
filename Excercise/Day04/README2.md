@@ -113,3 +113,9 @@ docker exec -it kafka bash
 docker exec -it cassandra cqlsh
 
 DESCRIBE TABLES;
+
+
+https://www.freeformatter.com/cron-expression-generator-quartz.html
+
+
+docker run --entrypoint sh <your-image-name>
