@@ -24,3 +24,19 @@ enablePlugins(AssemblyPlugin)
 mainClass in (Compile, run) := Some("com.example.Main")
 assembly / mainClass := Some("com.example.Main")
 assembly / assemblyJarName := "app.jar"
+
+assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case PathList("reference.conf") => MergeStrategy.concat
+  case "application.conf" => MergeStrategy.concat
+  case "version.conf" => MergeStrategy.concat // Explicitly concat version.conf
+  case x if x.endsWith(".properties") => MergeStrategy.discard
+  case x if x.endsWith(".MF") => MergeStrategy.discard
+  case x if x.endsWith(".class") => MergeStrategy.last
+  case x if x.endsWith(".proto") => MergeStrategy.last
+  case x if x.endsWith(".json") => MergeStrategy.last
+  case x if x.endsWith(".txt") => MergeStrategy.last
+  case x =>
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
+    oldStrategy(x)
+}

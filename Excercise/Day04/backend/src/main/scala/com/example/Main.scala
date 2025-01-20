@@ -28,7 +28,7 @@ object Main {
   val log = Logging(system, getClass)
 
   // Kafka Configuration
-  val kafkaBootstrapServers = "your-kafka-bootstrap-servers:9092" // Replace with your Kafka broker address
+  val kafkaBootstrapServers = "kafka:9092" // Replace with your Kafka broker address
   val kafkaTopic = "mouse-activity-topic" // Replace with your topic name
 
   val producerSettings = ProducerSettings(system, new StringSerializer, new StringSerializer)
