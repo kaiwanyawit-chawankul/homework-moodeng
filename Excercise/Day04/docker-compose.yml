@@ -82,15 +82,15 @@ services:
     networks:
       - analytics-net
 
-  # cassandra:
-  #   image: cassandra:latest
-  #   container_name: cassandra
-  #   ports:
-  #     - "9042:9042"
-  #   volumes:
-  #     - ./cassandra-data:/var/lib/cassandra
-  #   networks:
-  #     - analytics-net
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./cassandra-data:/var/lib/cassandra
+    networks:
+      - analytics-net
 
   redis:
     image: redis:latest
