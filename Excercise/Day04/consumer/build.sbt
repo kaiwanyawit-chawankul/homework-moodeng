@@ -1,27 +1,35 @@
-name := "Scala Cron Job Example"
+name := "Scala Long running Example"
 
 version := "0.1"
 
 scalaVersion := "2.13.10"
 
-// Define the Akka version globally
-val akkaVersion = "2.6.20"
+// Compiler options (optional, but recommended)
+scalacOptions := Seq(
+  "-encoding", "UTF-8", // Ensures consistent encoding
+  "-deprecation", // Warn about deprecated features
+  "-feature", // Warn about features that need explicit import
+  "-unchecked", // Warn about unchecked operations
+  "-Xlint", // Enable recommended additional linting checks
+  "-Ywarn-dead-code" // Warn about dead code
+)
 
-libraryDependencies ++= Seq(
-  "com.github.pureconfig" %% "pureconfig" % "0.17.3",        // PureConfig for config handling
-  "org.slf4j" % "slf4j-api" % "1.7.32",                       // SLF4J logging
-  "ch.qos.logback" % "logback-classic" % "1.2.6",              // Logback for logging
-
-  // Akka dependencies (all set to the same version)
-  "com.typesafe.akka" %% "akka-actor" % akkaVersion,           // Akka Actor library
-  "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,     // Akka Actor Typed
-  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,           // SLF4J logging for Akka
-  "com.typesafe.akka" %% "akka-http" % "10.2.9",               // Akka HTTP if needed for other routes
-
-  "org.quartz-scheduler" % "quartz" % "2.3.2"                  // Quartz library
+libraryDependencies ++= Seq( // Use ++= for adding multiple dependencies
+  "org.apache.kafka" % "kafka-clients" % "3.6.1", // Use a recent version
+  "org.slf4j" % "slf4j-api" % "2.0.9", // SLF4j API (interface)
+  "ch.qos.logback" % "logback-classic" % "1.4.11" // Logback implementation (choose one)
+  // other dependencies...
 )
 
 // Optional: Add sbt-assembly plugin if you want to package the app
 enablePlugins(AssemblyPlugin)
 
 assemblyJarName in assembly := "app.jar"
+
+assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", xs @ _*) if xs.map(_.toLowerCase).contains("manifest.mf") =>
+    MergeStrategy.discard
+  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.discard
+  case PathList("module-info.class") => MergeStrategy.discard // Add this line
+  case x => MergeStrategy.first
+}

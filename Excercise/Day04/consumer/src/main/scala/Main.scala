@@ -1,63 +1,70 @@
-import akka.actor.{Actor, ActorSystem, Props}
-import org.quartz._
-import org.quartz.impl.StdSchedulerFactory
-import com.typesafe.config.ConfigFactory
-import scala.concurrent.ExecutionContext.Implicits.global
-import akka.actor.ActorSystem
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.TopicPartition
+import java.time.Duration
+import java.util.{Collections, Properties}
+import scala.jdk.CollectionConverters._
+import scala.util.{Try, Success, Failure}
+import org.slf4j.LoggerFactory
 
-// Define the configuration case class
-case class CronJobConfig(cronExpression: String)
+object KafkaConsumerExample {
 
-// Create your Akka Actor
-class CronJobActor extends Actor {
-  override def receive: Receive = {
-    case "run" =>
-      // Simulate task execution
-      println(s"Running cron job at: ${System.currentTimeMillis()}")
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  def main(args: Array[String]): Unit = {
+    val bootstrapServers = "localhost:9092" // Replace with your Kafka brokers
+    val topic = "mouse-activity-topic" // Replace with your topic name
+    val groupId = "my-scala-consumer-group" // Replace with your consumer group ID
+
+    val properties = new Properties()
+    properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+    properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+    properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
+    properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId)
+    properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest") // Start from the beginning
+    properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false") // Disable auto-commit
+    properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100") // Limit the number of records fetched in each poll
+
+    val consumer = new KafkaConsumer[String, String](properties)
+
+    try {
+      consumer.subscribe(Collections.singletonList(topic))
+
+      while (true) {
+        val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(100))
+
+        if (!records.isEmpty) {
+          records.asScala.foreach { record =>
+            logger.info(s"Consumed: Key: ${record.key()}, Value: ${record.value()}, Partition: ${record.partition()}, Offset: ${record.offset()}")
+            // Process your record here
+            // Example:
+            try {
+              processRecord(record)
+            } catch {
+              case e: Exception => logger.error("Error processing record", e)
+            }
+          }
+           // Manually commit offsets after processing a batch
+          consumer.commitSync()
+        }
+      }
+    } catch {
+      case e: Exception => logger.error("Error in consumer loop", e)
+    } finally {
+      consumer.close()
+    }
   }
-}
 
-// Create a Quartz job that will trigger the Akka actor
-class AkkaJobWrapper(actorSystem: ActorSystem, actorProps: Props) extends Job {
-  override def execute(context: JobExecutionContext): Unit = {
-    // Create the actor
-    val cronJobActor = actorSystem.actorOf(actorProps)
-    cronJobActor ! "run"
+  // Example record processing function
+  def processRecord(record: org.apache.kafka.clients.consumer.ConsumerRecord[String, String]): Try[Unit] = {
+    // Your logic to process the record
+    // This example just prints the value
+    Try {
+      println(s"Processing value: ${record.value()}")
+      // Simulate some processing that might fail
+      if (record.value().contains("error")) {
+        throw new RuntimeException("Simulated processing error")
+      }
+    }
   }
-}
-
-object Main extends App {
-  // Load configuration from application.conf
-  val cronConfig = ConfigFactory.load().getString("akka.quartz.cron-expression")
-
-  // Create ActorSystem
-  val system: ActorSystem = ActorSystem("CronJobSystem")
-
-  // Create Props for your CronJobActor
-  val cronJobActorProps = Props[CronJobActor]
-
-  // Define Quartz job and trigger using the cron expression
-  val job = JobBuilder.newJob(classOf[AkkaJobWrapper])
-    .usingJobData("actorSystem", system.toString) // Optionally pass any parameters to the job
-    .usingJobData("actorProps", cronJobActorProps.toString) // Pass the Props for the actor
-    .build()
-
-  val trigger = TriggerBuilder.newTrigger()
-    .withIdentity("cronTrigger")
-    .withSchedule(CronScheduleBuilder.cronSchedule(cronConfig))
-    .build()
-
-  // Create a scheduler
-  val scheduler = new StdSchedulerFactory().getScheduler
-
-  // Start the scheduler
-  scheduler.start()
-
-  // Schedule the job
-  scheduler.scheduleJob(job, trigger)
-
-  println(s"Scheduled cron job with expression: $cronConfig")
-
-  // Keep the application running
-  system.whenTerminated
 }
