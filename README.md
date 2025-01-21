@@ -15,5 +15,9 @@ TODO:
  - [ ] Learning Kotlin
  - [x] Create an app
  - [ ] Create infra
- - [ ] xxx
- - [ ] xxx
+ - [ ] Learn Akka
+ - [ ] Learn Akka Actor
+ - [ ] Learn Cassandra
+ - [ ] Learn Event sourcing
+ - [ ] Learn Schema Registry
+ - [ ] Learn Proto buff

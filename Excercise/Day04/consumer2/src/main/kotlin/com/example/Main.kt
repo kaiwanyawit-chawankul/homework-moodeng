@@ -5,6 +5,7 @@ import org.quartz.*
 import org.quartz.impl.StdSchedulerFactory
 import org.slf4j.LoggerFactory
 
+//calculate protobuff and save into cassandra
 fun main() {
     val logger = LoggerFactory.getLogger("Main")
     val config = ConfigFactory.load()

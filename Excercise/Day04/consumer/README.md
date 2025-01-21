@@ -188,3 +188,7 @@ If you need to package this app into a single executable JAR (to run it independ
 - Ensure that you use a **proper logging framework** like **Logback** to monitor the behavior of the cron job in a production environment.
 
 Let me know if you need further details or assistance!
+
+
+protoc --java_out=src/main/scala src/main/proto/mouse_event.proto
+protoc --java_out=src/main/java your_proto_file.proto

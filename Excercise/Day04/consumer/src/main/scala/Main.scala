@@ -7,6 +7,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.{Try, Success, Failure}
 import org.slf4j.LoggerFactory
 
+//save data as protobuff
 object KafkaConsumerExample {
 
   private val logger = LoggerFactory.getLogger(getClass)

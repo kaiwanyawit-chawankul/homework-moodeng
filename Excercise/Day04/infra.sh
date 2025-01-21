@@ -1,0 +1,1 @@
+docker-compose up kafka cassandra scala-backend
