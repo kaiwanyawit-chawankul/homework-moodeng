@@ -33,3 +33,5 @@ assembly / assemblyMergeStrategy := {
   case PathList("module-info.class") => MergeStrategy.discard // Add this line
   case x => MergeStrategy.first
 }
+
+Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value)
