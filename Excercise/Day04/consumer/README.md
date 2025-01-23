@@ -192,3 +192,12 @@ Let me know if you need further details or assistance!
 
 protoc --java_out=src/main/scala src/main/proto/mouse_event.proto
 protoc --java_out=src/main/java your_proto_file.proto
+
+
+
+
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cassandra
+docker exec -it cassandra bash
+cqlsh
+CREATE KEYSPACE test_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+DESCRIBE KEYSPACES;

@@ -1,4 +1,3 @@
-import com.datastax._
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.StringDeserializer
 
@@ -9,18 +8,32 @@ import org.slf4j.LoggerFactory
 import your.protobuf.`package`.mouse_event.MouseEvent
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder
-import scalapb.GeneratedMessageCompanion
 import scalapb.json4s.JsonFormat
 
 object KafkaConsumerExample {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  var CONTAINER_IP_ADDRESS = "172.22.0.2" //cassandra
   // Cassandra session (adjust to match your configuration)
   val session = CqlSession.builder()
-    .withKeyspace("your_keyspace") // Replace with your keyspace name
-    .addContactPoint(java.net.InetSocketAddress.createUnresolved("localhost", 9042))
+    .withKeyspace("test_keyspace") // Replace with your keyspace name
+//    .addContactPoint(java.net.InetSocketAddress.createUnresolved("localhost", 9042))
+    .addContactPoint(new java.net.InetSocketAddress("localhost", 9042))
+    .withLocalDatacenter("datacenter1")
     .build()
+
+  // Define the keyspace name
+  val keyspaceName = "test_keyspace"
+
+  // Get metadata for the keyspace
+  val metadata = session.getMetadata
+  val keyspace = metadata.getKeyspace(keyspaceName).orElseThrow(() => new RuntimeException(s"Keyspace $keyspaceName not found"))
+
+  // Get the list of all tables in the keyspace
+  val tables = keyspace.getTables
+  println(s"Tables in keyspace $keyspaceName:")
+
 
   def main(args: Array[String]): Unit = {
     val bootstrapServers = "localhost:9092"

@@ -89,6 +89,7 @@ services:
       - "9042:9042"
     volumes:
       - ./cassandra-data:/var/lib/cassandra
+      - ./init.cql:/docker-entrypoint-initdb.d/init.cql
     networks:
       - analytics-net
 
