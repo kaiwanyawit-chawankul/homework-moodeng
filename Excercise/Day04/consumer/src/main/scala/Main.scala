@@ -8,6 +8,12 @@ import org.slf4j.LoggerFactory
 import your.protobuf.`package`.mouse_event.MouseEvent
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder
+import com.datastax.oss.driver.api.core.CqlSession
+//import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata
+//import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
+import com.datastax.oss.driver.api.core.metadata.schema.{KeyspaceMetadata, TableMetadata}
+
 import scalapb.json4s.JsonFormat
 
 object KafkaConsumerExample {
@@ -28,11 +34,16 @@ object KafkaConsumerExample {
 
   // Get metadata for the keyspace
   val metadata = session.getMetadata
-  val keyspace = metadata.getKeyspace(keyspaceName).orElseThrow(() => new RuntimeException(s"Keyspace $keyspaceName not found"))
+  val keyspace : KeyspaceMetadata = metadata.getKeyspace(keyspaceName).orElseThrow(() => new RuntimeException(s"Keyspace $keyspaceName not found"))
 
   // Get the list of all tables in the keyspace
   val tables = keyspace.getTables
   println(s"Tables in keyspace $keyspaceName:")
+
+      // For each table, run a SELECT * query
+    tables.forEach { (tableName, tableMetadata: TableMetadata)=>
+      println(s"Querying table: ${tableName}")
+    }
 
 
   def main(args: Array[String]): Unit = {
@@ -99,7 +110,7 @@ object KafkaConsumerExample {
     // CREATE TABLE mouse_events (event_id UUID PRIMARY KEY, event_type TEXT, data LIST<TEXT>);
 
     val query = QueryBuilder.insertInto("mouse_events")
-      .value("event_type", QueryBuilder.literal(mouseEvent.eventType))
+      .value("eventType", QueryBuilder.literal(mouseEvent.eventType))
       .value("data", QueryBuilder.literal(mouseEvent.data.map(data =>
         s"(${data.x}, ${data.y}, ${data.time})").mkString("[", ", ", "]")))
       .build()
