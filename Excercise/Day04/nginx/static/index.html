@@ -65,7 +65,7 @@
             const mouseData = {
                 x: e.clientX,
                 y: e.clientY,
-                button: e.button, // 0 = left, 1 = middle, 2 = right
+                // button: e.button, // 0 = left, 1 = middle, 2 = right
                 timestamp: new Date().toISOString(),
             };
             sendMouseActivity('click', [mouseData]);
