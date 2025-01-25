@@ -68,7 +68,7 @@
                 button: e.button, // 0 = left, 1 = middle, 2 = right
                 timestamp: new Date().toISOString(),
             };
-            sendMouseActivity('click', mouseData);
+            sendMouseActivity('click', [mouseData]);
         });
 
         // Example of processing the collected data (e.g., sending it to a server)
