@@ -109,43 +109,16 @@ object KafkaConsumerExample {
 
   // Save the Protobuf object to Cassandra
   def saveToCassandra(mouseEvent: MouseEvent): Unit = {
-    // Assuming the Cassandra schema is as follows:
-    // CREATE TABLE mouse_events (event_id UUID PRIMARY KEY, event_type TEXT, data LIST<TEXT>);
-
-    // val query = QueryBuilder.insertInto("mouse_events")
-    //   .value("eventType", QueryBuilder.literal(mouseEvent.eventType))
-    //   .value("data", QueryBuilder.literal(mouseEvent.data.map(data =>
-    //     s"(${data.x}, ${data.y}, ${data.time})").mkString("[", ", ", "]")))
-    //   .build()
-
-    // session.execute(query)
-    // var mousePositions = mouseEvent.data.asJava;
-
-    // val statement = SimpleStatement.builder(
-    //   "INSERT INTO mouse_events (eventType, eventTimestamp, data) VALUES (?, ?, ?)"
-    // )
-    //   .addPositionalValues(mouseEvent.eventType, mousePositions.get(0).time, mousePositions)
-    //   .build()
-
-    // session.execute(statement)
-
-
-    // logger.info(s"Saved MouseEvent: ${mouseEvent.eventType} to Cassandra")
 
       val insertStatement = session.prepare(s"INSERT INTO mouse_events (id, eventType, data) VALUES (?, ?, ?)")
-      //val selectStatement = session.prepare(s"SELECT data FROM mouse_events WHERE eventType = ?")
-
-      // Example Protobuf data
-      val mouseData1 = MouseData(x = 10, y = 20, time = System.currentTimeMillis())
-      val mouseData2 = MouseData(x = 30, y = 40, time = System.currentTimeMillis() + 100)
-      val eventTimeStampForMouseEvent = System.currentTimeMillis() + 100
-      val mouseEvent = MouseEvent(eventType = "mousemove", data = Seq(mouseData1, mouseData2))
+      val selectStatement = session.prepare(s"SELECT data FROM mouse_events WHERE id = ?")
 
       // Insert data
       insertMouseEvent(session, insertStatement, mouseEvent)
 
+
       // Retrieve data
-//      val retrievedEvent = retrieveMouseEvent(session, selectStatement, "mousemove")
+//      val retrievedEvent = retrieveMouseEvent(session, selectStatement, UUID.fromString("8459eb3d-e19f-45e6-a585-fe812c628ff9"))
 //      retrievedEvent match {
 //        case Some(event) => println(s"Retrieved Event: $event")
 //        case None => println("Event not found.")
@@ -160,8 +133,8 @@ def insertMouseEvent(session: CqlSession, statement: PreparedStatement, event: M
     session.execute(boundStatement)
   }
 
-  def retrieveMouseEvent(session: CqlSession, statement: PreparedStatement, eventType: String): Option[MouseEvent] = {
-    val boundStatement = statement.bind(eventType)
+  def retrieveMouseEvent(session: CqlSession, statement: PreparedStatement, id: UUID): Option[MouseEvent] = {
+    val boundStatement = statement.bind(id)
     val result = session.execute(boundStatement)
     val row = result.one()
     if (row != null) {
