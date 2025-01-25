@@ -212,3 +212,12 @@ MouseEvent(mousemove,List(MouseData(16,357,1737647978172,UnknownFieldSet(Map()))
 
 
 com.datastax.oss.driver.api.core.servererrors.InvalidQueryException: Cannot execute this query as it might involve data filtering and thus may have unpredictable performance. If you want to execute this query despite the performance unpredictability, use ALLOW FILTERING
+
+because this is not PK....try using PK
+
+
+
+scalapb.json4s.JsonFormatException: Expected an array for repeated field data of MouseEvent
+
+
+
