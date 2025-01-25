@@ -2,18 +2,21 @@ import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, Kafka
 import org.apache.kafka.common.serialization.StringDeserializer
 
 import java.time.Duration
-import java.util.{Collections, Properties}
+import java.util.{Collections, Properties, UUID}
 import scala.jdk.CollectionConverters._
 import org.slf4j.LoggerFactory
-import your.protobuf.`package`.mouse_event.MouseEvent
+import your.protobuf.`package`.mouse_event.{MouseData, MouseEvent}
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.google.protobuf.InvalidProtocolBufferException
+//import org.apache.kafka.common.serialization.Serdes.ByteBuffer
 //import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata
 //import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata
 import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.datastax.oss.driver.api.core.metadata.schema.{KeyspaceMetadata, TableMetadata}
-
+import java.nio.ByteBuffer
 import scalapb.json4s.JsonFormat
 
 object KafkaConsumerExample {
@@ -109,13 +112,73 @@ object KafkaConsumerExample {
     // Assuming the Cassandra schema is as follows:
     // CREATE TABLE mouse_events (event_id UUID PRIMARY KEY, event_type TEXT, data LIST<TEXT>);
 
-    val query = QueryBuilder.insertInto("mouse_events")
-      .value("eventType", QueryBuilder.literal(mouseEvent.eventType))
-      .value("data", QueryBuilder.literal(mouseEvent.data.map(data =>
-        s"(${data.x}, ${data.y}, ${data.time})").mkString("[", ", ", "]")))
-      .build()
+    // val query = QueryBuilder.insertInto("mouse_events")
+    //   .value("eventType", QueryBuilder.literal(mouseEvent.eventType))
+    //   .value("data", QueryBuilder.literal(mouseEvent.data.map(data =>
+    //     s"(${data.x}, ${data.y}, ${data.time})").mkString("[", ", ", "]")))
+    //   .build()
 
-    session.execute(query)
-    logger.info(s"Saved MouseEvent: ${mouseEvent.eventType} to Cassandra")
+    // session.execute(query)
+    // var mousePositions = mouseEvent.data.asJava;
+
+    // val statement = SimpleStatement.builder(
+    //   "INSERT INTO mouse_events (eventType, eventTimestamp, data) VALUES (?, ?, ?)"
+    // )
+    //   .addPositionalValues(mouseEvent.eventType, mousePositions.get(0).time, mousePositions)
+    //   .build()
+
+    // session.execute(statement)
+
+
+    // logger.info(s"Saved MouseEvent: ${mouseEvent.eventType} to Cassandra")
+
+      val insertStatement = session.prepare(s"INSERT INTO mouse_events (id, eventType, data) VALUES (?, ?, ?)")
+      //val selectStatement = session.prepare(s"SELECT data FROM mouse_events WHERE eventType = ?")
+
+      // Example Protobuf data
+      val mouseData1 = MouseData(x = 10, y = 20, time = System.currentTimeMillis())
+      val mouseData2 = MouseData(x = 30, y = 40, time = System.currentTimeMillis() + 100)
+      val eventTimeStampForMouseEvent = System.currentTimeMillis() + 100
+      val mouseEvent = MouseEvent(eventType = "mousemove", data = Seq(mouseData1, mouseData2))
+
+      // Insert data
+      insertMouseEvent(session, insertStatement, mouseEvent)
+
+      // Retrieve data
+//      val retrievedEvent = retrieveMouseEvent(session, selectStatement, "mousemove")
+//      retrievedEvent match {
+//        case Some(event) => println(s"Retrieved Event: $event")
+//        case None => println("Event not found.")
+//      }
+  }
+
+def insertMouseEvent(session: CqlSession, statement: PreparedStatement, event: MouseEvent): Unit = {
+    var id: UUID = UUID.randomUUID();
+    val serialized = event.toByteArray
+    val byteBuffer = ByteBuffer.wrap(serialized)
+    val boundStatement = statement.bind(id, event.eventType, byteBuffer)
+    session.execute(boundStatement)
+  }
+
+  def retrieveMouseEvent(session: CqlSession, statement: PreparedStatement, eventType: String): Option[MouseEvent] = {
+    val boundStatement = statement.bind(eventType)
+    val result = session.execute(boundStatement)
+    val row = result.one()
+    if (row != null) {
+      val byteBuffer = row.getByteBuffer("data")
+      if (byteBuffer != null) {
+        try {
+          Some(MouseEvent.parseFrom(byteBuffer.array()))
+        } catch {
+          case e: InvalidProtocolBufferException =>
+            println(s"Error parsing Protobuf: ${e.getMessage}")
+            None
+        }
+      } else {
+        None
+      }
+    } else {
+      None
+    }
   }
 }
