@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heat Map</title>
+  </head>
+  <body>
+    <h1>Heat Map</h1>
+    <p>Display heatmap value</p>
+    <div
+      id="heatmap"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+      "
+    ></div>
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.0/heatmap.min.js"></script>
+    <script>
+      async function getData() {
+        const url = "/heatmap.json";
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+          }
+
+          const json = await response.json();
+          return json;
+          console.log(json);
+        } catch (error) {
+          console.error(error.message);
+        }
+      }
+      const heatmapInstance = h337.create({
+        container: document.querySelector("#heatmap"),
+      });
+      const gridSize = 50; // 50px per grid cell
+
+      async function render() {
+        const heatmap = await getData();
+
+        const heatmapData = Object.keys(heatmap).map((cell) => {
+          const [x, y] = cell.split(",").map(Number);
+          return {
+            x: x * gridSize, // Convert grid cell back to pixel coordinates
+            y: y * gridSize,
+            value: heatmap[cell], // The intensity of the heatmap (frequency of mouse movement in this cell)
+          };
+        });
+
+        // Pass the heatmap data to the Heatmap.js instance
+        heatmapInstance.setData({
+          max: Math.max(...heatmapData.map((d) => d.value)),
+          data: heatmapData,
+        });
+      }
+      render();
+    </script>
+  </body>
+</html>
