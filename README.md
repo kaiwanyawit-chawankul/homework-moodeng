@@ -14,10 +14,11 @@ TODO:
  - [ ] Learning Scala
  - [ ] Learning Kotlin
  - [x] Create an app
- - [ ] Create infra
+ - [x] Create infra
+ - [x] Learn Kafka
  - [ ] Learn Akka
  - [ ] Learn Akka Actor
- - [ ] Learn Cassandra
+ - [x] Learn Cassandra
  - [ ] Learn Event sourcing
  - [ ] Learn Schema Registry
- - [ ] Learn Proto buff
+ - [x] Learn Proto buff

@@ -128,3 +128,15 @@ confluentinc/cp-kafka:latest
  - Log aggregation (centralizing logs for multiple services).
  - Event-driven microservices (decoupling services and enabling asynchronous communication).
  - Data pipeline (moving data between different storage or processing systems).
+
+
+## To connect
+docker exec -it kafka bash
+
+/usr/bin/kafka-topics --create --topic test-topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+/usr/bin/kafka-console-producer --broker-list localhost:9092 --topic test-topic
+
+/usr/bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test-topic --from-beginning
+
+/usr/bin/kafka-topics --list --bootstrap-server localhost:9092
