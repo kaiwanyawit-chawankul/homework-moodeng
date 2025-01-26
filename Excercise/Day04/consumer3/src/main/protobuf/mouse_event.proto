@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package your.protobuf.package;
+
+message MouseData {
+  int32 x = 1;
+  int32 y = 2;
+  int64 time = 3;
+}
+
+message MouseEvent {
+  string eventType = 1;
+  repeated MouseData data = 2;
+}
+
