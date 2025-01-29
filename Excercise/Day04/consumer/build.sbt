@@ -19,15 +19,15 @@ resolvers += Resolver.sonatypeRepo("public")
 resolvers += Resolver.mavenCentral
 
 libraryDependencies ++= Seq( // Use ++= for adding multiple dependencies
-  "org.apache.kafka" % "kafka-clients" % "3.6.1", // Use a recent version
-  "org.slf4j" % "slf4j-api" % "2.0.9", // SLF4j API (interface)
-  "ch.qos.logback" % "logback-classic" % "1.4.11", // Logback implementation (choose one)
-  "com.datastax.oss" % "java-driver-core" % "4.15.0", // Cassandra driver
-  "com.datastax.oss" % "java-driver-query-builder" % "4.15.0",
-  "com.google.protobuf" % "protobuf-java" % "3.21.12", // Use a recent version
-  "com.google.protobuf" % "protobuf-java-util" % "3.21.12",
+  "org.apache.kafka" % "kafka-clients" % "3.9.0", // Use a recent version
+  "org.slf4j" % "slf4j-api" % "2.0.16", // SLF4j API (interface)
+  "ch.qos.logback" % "logback-classic" % "1.5.16", // Logback implementation (choose one)
+  "com.datastax.oss" % "java-driver-core" % "4.17.0", // Cassandra driver
+  "com.datastax.oss" % "java-driver-query-builder" % "4.17.0",
+  "com.google.protobuf" % "protobuf-java" % "4.29.3", // Use a recent version
+  "com.google.protobuf" % "protobuf-java-util" % "4.29.3",
   "com.thesamet.scalapb" %%% "scalapb-runtime" % "0.11.11",
-  "com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.1",  // Add this for JSON (de)serialization
+  "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",  // Add this for JSON (de)serialization
   // other dependencies...
 )
 

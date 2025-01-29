@@ -1,1 +1,1 @@
-docker-compose up kafka cassandra #scala-backend
+docker-compose up nginx kafka cassandra scala-backend

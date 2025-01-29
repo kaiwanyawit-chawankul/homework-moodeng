@@ -28,7 +28,7 @@ object Main {
   val log = Logging(system, getClass)
 
   // Kafka Configuration
-  val kafkaBootstrapServers = "localhost:9092" // Replace with your Kafka broker address
+  val kafkaBootstrapServers = "kafka:9092" // Replace with your Kafka broker address
   val kafkaTopic = "mouse-activity-topic" // Replace with your topic name
 
   val producerSettings = ProducerSettings(system, new StringSerializer, new StringSerializer)
@@ -59,7 +59,11 @@ object Main {
                   .runWith(Producer.plainSink(producerSettings))
                   .onComplete {
                     case scala.util.Success(_) => log.info(s"Sent activity to Kafka: $activity")
-                    case scala.util.Failure(e) => log.error(s"Failed to send activity to Kafka: ${e.getMessage}")
+                    case scala.util.Failure(e) => {
+                      println(s"Failed to send activity to Kafka: ${e.getMessage}")
+                      log.error(s"Failed to send activity to Kafka: ${e.getMessage}")
+                      complete(StatusCodes.InternalServerError)
+                    }
                   }
                 complete(StatusCodes.OK) // Respond with success even if Kafka fails
               }
@@ -79,7 +83,7 @@ object Main {
 
     val bindingFuture = Http().newServerAt("0.0.0.0", 8080).bind(route)
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-
+    println(s"Kafka on ...$kafkaBootstrapServers")
     import scala.concurrent.duration._
     import scala.concurrent.{Await, Future}
     sys.addShutdownHook{

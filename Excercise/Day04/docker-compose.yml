@@ -24,10 +24,10 @@ services:
     container_name: scala-backend
     ports:
       - "8080:8080"  # Expose the Scala backend on port 8080
-    # depends_on:
-    #   - kafka
-    #   - redis
-    #   - cassandra
+    depends_on:
+      - kafka
+      # - redis
+      # - cassandra
     networks:
       - analytics-net
 
@@ -64,12 +64,12 @@ services:
       KAFKA_KRAFT_MODE: "true"  # This enables KRaft mode in Kafka.
       KAFKA_PROCESS_ROLES: controller,broker  # Kafka acts as both broker and controller.
       KAFKA_NODE_ID: 1  # A unique ID for this Kafka instance.
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"  # Defines the controller voters.
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"  # Defines the controller voters.
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LOG_DIRS: /var/lib/kafka/data  # Where Kafka stores its logs.
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # Kafka will automatically create topics if needed.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1  # Since we’re running one broker, one replica is enough.
@@ -108,32 +108,32 @@ services:
     container_name: processing-backend
     ports:
       - "8081:8081"  # Expose the Scala backend on port 8080
-    # depends_on:
-    #   - kafka
-    #   - redis
-    #   - cassandra
+    depends_on:
+      - kafka
+      # - redis
+      - cassandra
     networks:
       - analytics-net
 
-  # processing-backend2:
-  #   build:
-  #     context: ./consumer2
-  #     dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Kotlin app
-  #   container_name: processing-backend2
-  #   ports:
-  #     - "8082:8082"  # Expose the Kotlin backend on port 8082
-  #   # depends_on:
-  #   #   - kafka
-  #   #   - redis
-  #   #   - cassandra
-  #   networks:
-  #     - analytics-net
-
   processing-backend2:
+    build:
+      context: ./consumer2
+      dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Kotlin app
+    container_name: processing-backend2
+    ports:
+      - "8082:8082"  # Expose the Kotlin backend on port 8082
+    depends_on:
+      - kafka
+      # - redis
+      - cassandra
+    networks:
+      - analytics-net
+
+  processing-backend3:
     build:
       context: ./consumer3
       dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Scala app
-    container_name: processing-backend2
+    container_name: processing-backend3
     ports:
       - "8083:8083"  # Expose the Scala backend on port 8080
     # depends_on:

@@ -1,46 +1,40 @@
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.google.protobuf.InvalidProtocolBufferException
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.slf4j.LoggerFactory
+import your.protobuf.`package`.mouse_event.MouseEvent
 
 import java.time.Duration
 import java.util.{Collections, Properties, UUID}
 import scala.jdk.CollectionConverters._
-import org.slf4j.LoggerFactory
-import your.protobuf.`package`.mouse_event.{MouseData, MouseEvent}
-import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder
-import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
-import com.google.protobuf.InvalidProtocolBufferException
-//import org.apache.kafka.common.serialization.Serdes.ByteBuffer
-//import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata
-//import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata
-import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.datastax.oss.driver.api.core.metadata.schema.{KeyspaceMetadata, TableMetadata}
-import java.nio.ByteBuffer
 import scalapb.json4s.JsonFormat
+
+import java.nio.ByteBuffer
+import java.util.Date
 
 object KafkaConsumerExample {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  var CONTAINER_IP_ADDRESS = "172.22.0.2" //cassandra
   // Cassandra session (adjust to match your configuration)
-  val session = CqlSession.builder()
+  private val session = CqlSession.builder()
     .withKeyspace("test_keyspace") // Replace with your keyspace name
-//    .addContactPoint(java.net.InetSocketAddress.createUnresolved("localhost", 9042))
-    .addContactPoint(new java.net.InetSocketAddress("localhost", 9042))
+    .addContactPoint(new java.net.InetSocketAddress("cassandra", 9042))
     .withLocalDatacenter("datacenter1")
     .build()
 
   // Define the keyspace name
-  val keyspaceName = "test_keyspace"
+  private val keyspaceName = "test_keyspace"
 
   // Get metadata for the keyspace
-  val metadata = session.getMetadata
-  val keyspace : KeyspaceMetadata = metadata.getKeyspace(keyspaceName).orElseThrow(() => new RuntimeException(s"Keyspace $keyspaceName not found"))
+  private val metadata = session.getMetadata
+  private val keyspace : KeyspaceMetadata = metadata.getKeyspace(keyspaceName).orElseThrow(() => new RuntimeException(s"Keyspace $keyspaceName not found"))
 
   // Get the list of all tables in the keyspace
-  val tables = keyspace.getTables
+  private val tables = keyspace.getTables
   println(s"Tables in keyspace $keyspaceName:")
 
       // For each table, run a SELECT * query
@@ -50,7 +44,7 @@ object KafkaConsumerExample {
 
 
   def main(args: Array[String]): Unit = {
-    val bootstrapServers = "localhost:9092"
+    val bootstrapServers = "kafka:9092"
     val topic = "mouse-activity-topic"
     val groupId = "my-scala-consumer-group"
 
@@ -69,13 +63,16 @@ object KafkaConsumerExample {
       consumer.subscribe(Collections.singletonList(topic))
 
       while (true) {
+        val now: Date = new Date()
+        //println(s"loop: ${now}")
         val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(100))
-
         if (!records.isEmpty) {
           records.asScala.foreach { record =>
             logger.info(s"Consumed: Key: ${record.key()}, Value: ${record.value()}, Partition: ${record.partition()}, Offset: ${record.offset()}")
             try {
               processRecord(record)
+              //val now: Date = new Date()
+              println(s"processRecord: ${now}")
             } catch {
               case e: Exception => logger.error("Error processing record", e)
             }
@@ -108,7 +105,7 @@ object KafkaConsumerExample {
   }
 
   // Save the Protobuf object to Cassandra
-  def saveToCassandra(mouseEvent: MouseEvent): Unit = {
+  private def saveToCassandra(mouseEvent: MouseEvent): Unit = {
 
       val insertStatement = session.prepare(s"INSERT INTO mouse_events (id, eventType, data) VALUES (?, ?, ?)")
       val selectStatement = session.prepare(s"SELECT data FROM mouse_events WHERE id = ?")
@@ -125,12 +122,13 @@ object KafkaConsumerExample {
 //      }
   }
 
-def insertMouseEvent(session: CqlSession, statement: PreparedStatement, event: MouseEvent): Unit = {
+private def insertMouseEvent(session: CqlSession, statement: PreparedStatement, event: MouseEvent): Unit = {
     var id: UUID = UUID.randomUUID();
     val serialized = event.toByteArray
     val byteBuffer = ByteBuffer.wrap(serialized)
     val boundStatement = statement.bind(id, event.eventType, byteBuffer)
     session.execute(boundStatement)
+    println(s"insertMouseEvent")
   }
 
   def retrieveMouseEvent(session: CqlSession, statement: PreparedStatement, id: UUID): Option[MouseEvent] = {

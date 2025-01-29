@@ -5,6 +5,10 @@ import org.quartz.JobExecutionContext
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.Row
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
+
 class MyJob : Job {
     private val logger = LoggerFactory.getLogger(MyJob::class.java)
 
