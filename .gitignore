@@ -6,3 +6,5 @@ hs_err_pid*
 
 kafka_data
 cassandra-data
+
+**/.idea
