@@ -27,7 +27,7 @@ WORKDIR /app
 COPY --from=builder /app/target/scala-2.13/app.jar /app/app.jar
 
 # Expose the port your application listens on (replace with your port)
-EXPOSE 8080
+EXPOSE 8081
 
 # Set the command to run the application
 CMD ["java", "-jar", "/app/app.jar"]

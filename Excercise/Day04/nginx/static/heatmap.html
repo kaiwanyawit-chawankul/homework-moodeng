@@ -22,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.0/heatmap.min.js"></script>
     <script>
       async function getData() {
-        const url = "/heatmap.json";
+        const url = "http://localhost:8081/heatmap";
         try {
           const response = await fetch(url);
           if (!response.ok) {

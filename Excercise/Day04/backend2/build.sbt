@@ -15,6 +15,9 @@ libraryDependencies ++= Seq(
   "com.google.protobuf" % "protobuf-java-util" % "4.29.3",
   "com.thesamet.scalapb" %%% "scalapb-runtime" % "0.11.11",
   "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",  // Add this for JSON (de)serialization
+  "com.datastax.oss" % "java-driver-core" % "4.17.0",
+  "io.spray" %% "spray-json" % "1.3.6",
+  "com.typesafe.play" %% "play-json" % "2.10.6"
   // other dependencies...
 )
 

@@ -31,6 +31,21 @@ services:
     networks:
       - analytics-net
 
+  # Scala Backend (Akka HTTP)
+  scala-backend2:
+    build:
+      context: ./backend2
+      dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Scala app
+    container_name: scala-backend2
+    ports:
+      - "8081:8081"  # Expose the Scala backend on port 8080
+    depends_on:
+      #- kafka
+      # - redis
+      - cassandra
+    networks:
+      - analytics-net
+
   # zookeeper:
   #   image: wurstmeister/zookeeper
   #   container_name: zookeeper

@@ -38,3 +38,10 @@ CREATE TABLE IF NOT EXISTS mouse_events (
     --PRIMARY KEY (eventType, eventTimestamp)
 );
 
+CREATE TABLE IF NOT EXISTS heatmap (
+    x INT,                         -- X-coordinate of the mouse
+    y INT,                         -- Y-coordinate of the mouse
+    count bigint,
+    PRIMARY KEY (x, y)
+);
+
