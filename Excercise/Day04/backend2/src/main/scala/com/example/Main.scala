@@ -2,45 +2,24 @@ package com.example
 
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import akka.http.scaladsl.model.HttpMethods.{GET, OPTIONS, POST}
 import akka.http.scaladsl.model.headers.{`Access-Control-Allow-Headers`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Origin`, `Content-Type`}
-import akka.http.scaladsl.model.{ContentTypes, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.{AsyncResultSet, Row, SimpleStatement}
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures
-import com.example.Main.HeatmapJsonProtocol.jsonFormat3
-import play.api.libs.json.Format.GenericFormat
-import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsObject, JsString, JsValue, JsonWriter, RootJsonFormat, enrichAny}
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
+import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-//import com.datastax.oss.driver.api.core.CqlSession
-//import com.datastax.oss.driver.api.core.cql.{Row, SimpleStatement}
-//import com.datastax.oss.driver.api.core.async.{ResultSetFuture, AsyncResultSet}
-//import java.net.InetSocketAddress
-//import scala.concurrent.{Future, ExecutionContext}
-//import scala.jdk.FutureConverters._
-
 import scala.compat.java8.FutureConverters.CompletionStageOps
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters._
 
 object Main {
 
   case class HeatmapPoint(x: Int, y: Int, count: Long)
-
-  // Define the JSON format for HeatmapPoint
-  object HeatmapJsonProtocol extends DefaultJsonProtocol {
-    implicit val heatmapPointFormat: RootJsonFormat[HeatmapPoint] = jsonFormat3(HeatmapPoint)
-  }
-
-  //implicit val StatementFormat: JsonWriter[AsyncResultSet] = jsonFormat3(HeatmapPoint)
 
   def getHeatmapData(session: CqlSession): List[HeatmapPoint] = {
     val statement = SimpleStatement.builder("SELECT x, y, count FROM test_keyspace.heatmap").build()
@@ -72,7 +51,6 @@ object Main {
   def main(args: Array[String]): Unit = {
 
     // Your main route or function
-    import HeatmapJsonProtocol._
     implicit val system = ActorSystem(Behaviors.empty, "my-system") // Create ActorSystem
     implicit val executionContext = system.executionContext // Get ExecutionContext
 
@@ -135,9 +113,7 @@ object Main {
                 onComplete(heatmapDataFuture) { // Use onComplete for asynchronous results
                   case scala.util.Success(heatmapPoints) =>
                     val jsonResponse: String = healMapToJson(heatmapPoints)
-
-                    //complete(heatmapData.toJson.prettyPrint)
-                    //var jsonResponse = customJsonMap.toJson.prettyPrint
+                    
                     complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))//omatically marshals to JSON
                   case scala.util.Failure(exception) =>
                     System.err.println(s"Error retrieving heatmap data: ${exception.getMessage}")
