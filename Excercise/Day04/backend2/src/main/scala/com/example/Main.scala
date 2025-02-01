@@ -4,18 +4,31 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import akka.http.scaladsl.model.HttpMethods.{GET, OPTIONS, POST}
 import akka.http.scaladsl.model.headers.{`Access-Control-Allow-Headers`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Origin`, `Content-Type`}
 import akka.http.scaladsl.model.{ContentTypes, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.SimpleStatement
+import com.datastax.oss.driver.api.core.cql.{AsyncResultSet, Row, SimpleStatement}
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures
+import com.example.Main.HeatmapJsonProtocol.jsonFormat3
 import play.api.libs.json.Format.GenericFormat
-import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
+import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsObject, JsString, JsValue, JsonWriter, RootJsonFormat, enrichAny}
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat.oFormatFromReadsAndOWrites
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
+//import com.datastax.oss.driver.api.core.CqlSession
+//import com.datastax.oss.driver.api.core.cql.{Row, SimpleStatement}
+//import com.datastax.oss.driver.api.core.async.{ResultSetFuture, AsyncResultSet}
+//import java.net.InetSocketAddress
+//import scala.concurrent.{Future, ExecutionContext}
+//import scala.jdk.FutureConverters._
+
+import scala.compat.java8.FutureConverters.CompletionStageOps
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.jdk.CollectionConverters._
 
 object Main {
@@ -26,6 +39,8 @@ object Main {
   object HeatmapJsonProtocol extends DefaultJsonProtocol {
     implicit val heatmapPointFormat: RootJsonFormat[HeatmapPoint] = jsonFormat3(HeatmapPoint)
   }
+
+  //implicit val StatementFormat: JsonWriter[AsyncResultSet] = jsonFormat3(HeatmapPoint)
 
   def getHeatmapData(session: CqlSession): List[HeatmapPoint] = {
     val statement = SimpleStatement.builder("SELECT x, y, count FROM test_keyspace.heatmap").build()
@@ -40,14 +55,18 @@ object Main {
   }
 
   def getHeatmapDataAsync(session: CqlSession): Future[List[HeatmapPoint]] = {
-    val statement = SimpleStatement.builder("SELECT x, y, count FROM my_keyspace.heatmap_table").build()
-    //val resultSetFuture = session.execute(statement).all().stream().map(List[HeatmapPoint]) // Explicit type for clarity
+    val statement = SimpleStatement.builder("SELECT x, y, count FROM test_keyspace.heatmap").build()
 
-    //    List<UserDto > allUsers = session
-    //      .execute(QueryBuilder.selectFrom(USER_TABLENAME).all().build())
-    //      .all().stream().map(UserDto::new)
-    //      .collect(Collectors.toList());
-    null
+    session.executeAsync(statement).toScala.flatMap { resultSet =>  // Use flatMap
+      val rows = resultSet.currentPage().asScala.toList // Convert to Scala List
+      val heatmapPoints = rows.map { row =>
+        val x = row.getInt("x")       // Direct type access for better performance
+        val y = row.getInt("y")
+        val count = row.getLong("count")
+        HeatmapPoint(x, y, count)
+      }
+      Future.successful(heatmapPoints) // Return the List[HeatmapPoint] wrapped in a Future
+    }
   }
 
   def main(args: Array[String]): Unit = {
@@ -85,20 +104,9 @@ object Main {
                 // Get heatmap data from Cassandra
                 val heatmapData = getHeatmapData(session)
 
-                val customJsonMap = heatmapData.map {
-                  case item: HeatmapPoint => s"${item.x},${item.y}" -> item.count
-                }
+                val jsonResponse: String = healMapToJson(heatmapData)
 
-                // Serialize the Map to a JSON object (not an array)
-                val jsonResponse = JsObject(customJsonMap.map {
-                  case (key, value) => key -> JsNumber(value)
-                }.toSeq: _*).prettyPrint
-
-                //complete(heatmapData.toJson.prettyPrint)
-                //var jsonResponse = customJsonMap.toJson.prettyPrint
                 complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))
-                //complete(Json.toJson(heatmapData))
-                //complete(HttpEntity(ContentTypes.`application/json`, heatmapData.toJson.prettyPrint))
               }catch {
                 case e: Throwable => // Catch all other exceptions (use with extreme caution)
                   println(s"A general error occurred: ${e.getMessage}", e)
@@ -122,16 +130,21 @@ object Main {
               respondWithHeaders(
                 `Access-Control-Allow-Origin`.*, // Allow all origins (for development)
               ) {
-                // Get heatmap data from Cassandra
-                val heatmapFuture = getHeatmapDataAsync(session)
-                onComplete(heatmapFuture) {
-                  case scala.util.Success(heatmapData) =>
-                    // Convert heatmapData to JSON or other format as needed
-                    // For now, just return a string representation
-                    complete(heatmapData.toString) // Replace with proper JSON response
-                  case scala.util.Failure(ex) =>
-                    complete(StatusCodes.InternalServerError -> s"Error: ${ex.getMessage}")
+                val heatmapDataFuture: Future[List[HeatmapPoint]] = getHeatmapDataAsync(session)
+
+                onComplete(heatmapDataFuture) { // Use onComplete for asynchronous results
+                  case scala.util.Success(heatmapPoints) =>
+                    val jsonResponse: String = healMapToJson(heatmapPoints)
+
+                    //complete(heatmapData.toJson.prettyPrint)
+                    //var jsonResponse = customJsonMap.toJson.prettyPrint
+                    complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))//omatically marshals to JSON
+                  case scala.util.Failure(exception) =>
+                    System.err.println(s"Error retrieving heatmap data: ${exception.getMessage}")
+                    exception.printStackTrace()
+                    complete(StatusCodes.InternalServerError, s"Error: ${exception.getMessage}") // Return an error response
                 }
+                //null
               }
             }
         }
@@ -150,5 +163,17 @@ object Main {
       Await.result(system.whenTerminated, 10.seconds)
       println("Shutdown complete.")
     }
+  }
+
+  private def healMapToJson(heatmapData: List[HeatmapPoint]) = {
+    val customJsonMap = heatmapData.map {
+      case item: HeatmapPoint => s"${item.x},${item.y}" -> item.count
+    }
+
+    // Serialize the Map to a JSON object (not an array)
+    val jsonResponse = JsObject(customJsonMap.map {
+      case (key, value) => key -> JsNumber(value)
+    }.toSeq: _*).prettyPrint
+    jsonResponse
   }
 }
