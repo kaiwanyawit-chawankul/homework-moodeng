@@ -91,6 +91,8 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 168  # Keep logs for 7 days.
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0  # No delay for consumer rebalancing.
       CLUSTER_ID: "Mk3OEYBSD34fcwNTJENDM2Qk"  # A unique ID for the Kafka cluster.
+      KAFKA_LOG4J_OPTS: "-Dlog4j.configuration=file:/opt/kafka/config/log4j.properties"
+      KAFKA_LOG_LEVEL: ERROR  # Set the log level to ERROR to suppress most console logs
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./kafka_data:/var/lib/kafka/data  # Store Kafka logs on your local machine.
@@ -122,7 +124,7 @@ services:
       dockerfile: Dockerfile.consumer  # Make sure this points to the Dockerfile for the Scala app
     container_name: processing-backend
     ports:
-      - "8081:8081"  # Expose the Scala backend on port 8080
+      - "7081:7081"  # Expose the Scala backend on port 8080
     depends_on:
       - kafka
       # - redis
@@ -136,7 +138,7 @@ services:
       dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Kotlin app
     container_name: processing-backend2
     ports:
-      - "8082:8082"  # Expose the Kotlin backend on port 8082
+      - "7082:7082"  # Expose the Kotlin backend on port 8082
     depends_on:
       - kafka
       # - redis
@@ -150,7 +152,7 @@ services:
       dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Scala app
     container_name: processing-backend3
     ports:
-      - "8083:8083"  # Expose the Scala backend on port 8080
+      - "7083:7083"  # Expose the Scala backend on port 8080
     # depends_on:
     #   - kafka
     #   - redis
