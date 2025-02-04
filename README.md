@@ -22,3 +22,7 @@ TODO:
  - [ ] Learn Event sourcing
  - [ ] Learn Schema Registry
  - [x] Learn Proto buff
+
+
+ Tasklist
+ - insert mouse_events into heatmap (x,y, count)

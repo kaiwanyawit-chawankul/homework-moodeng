@@ -1,10 +1,10 @@
 import com.datastax.oss.driver.api.core.CqlSession
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.cql.{BatchStatement, BatchType, BoundStatement, PreparedStatement, ResultSet}
 import com.google.protobuf.InvalidProtocolBufferException
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecords, KafkaConsumer}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
-import your.protobuf.`package`.mouse_event.MouseEvent
+import your.protobuf.`package`.mouse_event.{MouseData, MouseEvent}
 
 import java.time.Duration
 import java.util.{Collections, Properties, UUID}
@@ -14,6 +14,9 @@ import scalapb.json4s.JsonFormat
 
 import java.nio.ByteBuffer
 import java.util.Date
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 
 object KafkaConsumerExample {
 
@@ -48,6 +51,7 @@ object KafkaConsumerExample {
     val topic = "mouse-activity-topic"
     val groupId = "my-scala-consumer-group"
 
+    println(s"processRecord: ad0e466b-1fbb-48d2-a7cd-4febf7c7ac45")
     val properties = new Properties()
     properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
     properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, classOf[StringDeserializer].getName)
@@ -100,7 +104,45 @@ object KafkaConsumerExample {
       // Now save the Protobuf object to Cassandra
       saveToCassandra(mouseEvent)
     } catch {
-      case e: Exception => logger.error("Error deserializing JSON to Protobuf", e)
+      case e: Exception => println(s"Error ${e.getMessage}")
+      //case e: Exception => logger.error("Error deserializing JSON to Protobuf", e)
+    }
+  }
+
+   def batchUpdate(session: CqlSession, data: Map[(Int,Int), Long]): Future[Unit] = {
+
+     println(s"Batch update insertStatement")
+    val insertStatement: PreparedStatement = session.prepare("UPDATE heatmap SET count = count + ? WHERE x = ? and y = ?") // Adapt to your table
+     println(s"Should see this line")
+    Future { // Execute on a separate thread (important!)
+      try {
+        val batchStatement = BatchStatement.builder(BatchType.UNLOGGED)
+
+        println(s"Batch update data ${data.size}")
+
+        data.foreach { item =>
+          val boundStatement: BoundStatement = insertStatement.bind(item._2, item._1._1, item._1._2) // Bind your data
+          batchStatement.addStatement(boundStatement)
+        }
+
+        println(s"Batch update execute, batch size: ${batchStatement.getStatementsCount}")
+
+        println(s"Batch update execute")
+
+        session.execute(batchStatement.build()) // E
+
+        System.err.println(s"Batch update successful") // Mo
+        println(s"Batch update successful")// re reliable than println
+        // xecute the batch
+        Future.successful()
+
+      } catch {
+        case e: Exception =>
+          println(s"Batch update Exception ${e.getMessage}e")
+          System.err.println(s"Error during batch update: ${e.getMessage}")
+          e.printStackTrace() // Essential for debugging
+          throw e // Re-throw the exception to be handled by the Future
+      }
     }
   }
 
@@ -112,8 +154,26 @@ object KafkaConsumerExample {
 
       // Insert data
       insertMouseEvent(session, insertStatement, mouseEvent)
+    println("Batch countMap")
+    // Step 1: Group by (x, y)
+    val groupedByXY = mouseEvent.data.toList.groupBy { case (mouseData: MouseData) => (mouseData.x, mouseData.y) }
 
+    // Step 2: Count occurrences of (x, y)
+    val countMap = groupedByXY.map { case ((x, y), events) =>
+      ((x, y), events.size.longValue)  // (x, y) -> count of occurrences
+    }     // Count the size of each group
 
+    println(s"Batch update updateFuture")
+    val updateFuture = batchUpdate(session, countMap)
+    Await.result(updateFuture, 10.seconds)
+//    updateFuture.onComplete {
+//      case scala.util.Success(_) =>
+//        println("Batch update successful")
+//      case scala.util.Failure(exception) =>
+//        println(s"Batch update failed: ${exception.getMessage}")
+//        System.err.println(s"Batch update failed: ${exception.getMessage}")
+//    }
+    println(s"Batch update updateFuture.onComplete")
       // Retrieve data
 //      val retrievedEvent = retrieveMouseEvent(session, selectStatement, UUID.fromString("8459eb3d-e19f-45e6-a585-fe812c628ff9"))
 //      retrievedEvent match {

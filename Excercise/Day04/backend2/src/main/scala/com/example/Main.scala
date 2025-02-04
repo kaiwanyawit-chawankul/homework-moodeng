@@ -113,7 +113,7 @@ object Main {
                 onComplete(heatmapDataFuture) { // Use onComplete for asynchronous results
                   case scala.util.Success(heatmapPoints) =>
                     val jsonResponse: String = healMapToJson(heatmapPoints)
-                    
+
                     complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))//omatically marshals to JSON
                   case scala.util.Failure(exception) =>
                     System.err.println(s"Error retrieving heatmap data: ${exception.getMessage}")
