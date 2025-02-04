@@ -109,6 +109,10 @@ services:
       - ./init.cql:/docker-entrypoint-initdb.d/init.cql
     networks:
       - analytics-net
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES"]
+      interval: 30s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -126,9 +130,12 @@ services:
     ports:
       - "7081:7081"  # Expose the Scala backend on port 8080
     depends_on:
-      - kafka
+      #- kafka
       # - redis
-      - cassandra
+      cassandra:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_CONTACT_POINTS=cassandra  # Ensure this matches the Cassandra container's name
     networks:
       - analytics-net
 

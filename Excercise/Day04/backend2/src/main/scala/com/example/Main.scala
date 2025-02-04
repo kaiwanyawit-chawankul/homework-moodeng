@@ -57,7 +57,7 @@ object Main {
     // Cassandra session (adjust to match your configuration)
     val session = CqlSession.builder()
       .withKeyspace("test_keyspace") // Replace with your keyspace name
-      .addContactPoint(new java.net.InetSocketAddress("localhost", 9042))
+      .addContactPoint(new java.net.InetSocketAddress("cassandra", 9042))
       .withLocalDatacenter("datacenter1")
       .build()
 
