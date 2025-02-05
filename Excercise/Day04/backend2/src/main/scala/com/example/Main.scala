@@ -12,16 +12,16 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, RootJsonFormat}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.compat.java8.FutureConverters.CompletionStageOps
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.jdk.CollectionConverters._
+import redis.clients.jedis.Jedis
 
 object Main {
 
-  case class HeatmapPoint(x: Int, y: Int, count: Long)
+  private case class HeatmapPoint(x: Int, y: Int, count: Long)
 
-  def getHeatmapData(session: CqlSession): List[HeatmapPoint] = {
+  private def getHeatmapData(session: CqlSession): List[HeatmapPoint] = {
     val statement = SimpleStatement.builder("SELECT x, y, count FROM test_keyspace.heatmap").build()
     val resultSet = session.execute(statement) // Execute synchronously
 
@@ -33,7 +33,7 @@ object Main {
     }.toList // Convert to a List
   }
 
-  def getHeatmapDataAsync(session: CqlSession): Future[List[HeatmapPoint]] = {
+  private def getHeatmapDataAsync(session: CqlSession): Future[List[HeatmapPoint]] = {
     val statement = SimpleStatement.builder("SELECT x, y, count FROM test_keyspace.heatmap").build()
 
     session.executeAsync(statement).toScala.flatMap { resultSet =>  // Use flatMap
@@ -51,8 +51,8 @@ object Main {
   def main(args: Array[String]): Unit = {
 
     // Your main route or function
-    implicit val system = ActorSystem(Behaviors.empty, "my-system") // Create ActorSystem
-    implicit val executionContext = system.executionContext // Get ExecutionContext
+    implicit val system: ActorSystem[Any] = ActorSystem(Behaviors.empty, "my-system") // Create ActorSystem
+    implicit val executionContext: ExecutionContextExecutor = system.executionContext // Get ExecutionContext
 
     // Cassandra session (adjust to match your configuration)
     val session = CqlSession.builder()
@@ -60,6 +60,8 @@ object Main {
       .addContactPoint(new java.net.InetSocketAddress("cassandra", 9042))
       .withLocalDatacenter("datacenter1")
       .build()
+
+    var redis = new Jedis("redis", 6379)
 
     val route =
       concat(
@@ -108,17 +110,30 @@ object Main {
               respondWithHeaders(
                 `Access-Control-Allow-Origin`.*, // Allow all origins (for development)
               ) {
-                val heatmapDataFuture: Future[List[HeatmapPoint]] = getHeatmapDataAsync(session)
 
-                onComplete(heatmapDataFuture) { // Use onComplete for asynchronous results
-                  case scala.util.Success(heatmapPoints) =>
-                    val jsonResponse: String = healMapToJson(heatmapPoints)
+                try{
+                  var cache = redis.get("heatmap2");
 
-                    complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))//omatically marshals to JSON
-                  case scala.util.Failure(exception) =>
-                    System.err.println(s"Error retrieving heatmap data: ${exception.getMessage}")
-                    exception.printStackTrace()
-                    complete(StatusCodes.InternalServerError, s"Error: ${exception.getMessage}") // Return an error response
+                  if(cache!=null) complete(HttpEntity(ContentTypes.`application/json`, cache));
+
+                  val heatmapDataFuture: Future[List[HeatmapPoint]] = getHeatmapDataAsync(session)
+
+                  onComplete(heatmapDataFuture) { // Use onComplete for asynchronous results
+                    case scala.util.Success(heatmapPoints) =>
+                      val jsonResponse: String = healMapToJson(heatmapPoints)
+
+                      redis.set("heatmap2",jsonResponse);
+
+                      complete(HttpEntity(ContentTypes.`application/json`, jsonResponse))//omatically marshals to JSON
+                    case scala.util.Failure(exception) =>
+                      System.err.println(s"Error retrieving heatmap data: ${exception.getMessage}")
+                      exception.printStackTrace()
+                      complete(StatusCodes.InternalServerError, s"Error: ${exception.getMessage}") // Return an error response
+                  }
+                }catch {
+                  case e: Throwable => // Catch all other exceptions (use with extreme caution)
+                    println(s"A general error occurred: ${e.getMessage}", e)
+                    complete(StatusCodes.InternalServerError, s"Error: ${e.getMessage}")
                 }
                 //null
               }

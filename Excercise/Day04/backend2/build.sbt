@@ -17,7 +17,8 @@ libraryDependencies ++= Seq(
   "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",  // Add this for JSON (de)serialization
   "com.datastax.oss" % "java-driver-core" % "4.17.0",
   "io.spray" %% "spray-json" % "1.3.6",
-  "com.typesafe.play" %% "play-json" % "2.10.6"
+  "com.typesafe.play" %% "play-json" % "2.10.6",
+  "redis.clients" % "jedis" % "5.2.0"
   // other dependencies...
 )
 
@@ -29,21 +30,27 @@ enablePlugins(AssemblyPlugin)
 mainClass in (Compile, run) := Some("com.example.Main")
 assembly / mainClass := Some("com.example.Main")
 assembly / assemblyJarName := "app.jar"
+// resourceDirectory in Compile := baseDirectory.value / "src" / "main" / "resources"
 
 assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-  case PathList("reference.conf") => MergeStrategy.concat
-  case "application.conf" => MergeStrategy.concat
-  case "version.conf" => MergeStrategy.concat // Explicitly concat version.conf
-  case x if x.endsWith(".properties") => MergeStrategy.discard
-  case x if x.endsWith(".MF") => MergeStrategy.discard
-  case x if x.endsWith(".class") => MergeStrategy.last
-  case x if x.endsWith(".proto") => MergeStrategy.last
-  case x if x.endsWith(".json") => MergeStrategy.last
-  case x if x.endsWith(".txt") => MergeStrategy.last
-  case x =>
-    val oldStrategy = (assembly / assemblyMergeStrategy).value
-    oldStrategy(x)
+  // case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+   case PathList("reference.conf") => MergeStrategy.concat
+  // case "application.conf" => MergeStrategy.concat
+  // case "version.conf" => MergeStrategy.concat // Explicitly concat version.conf
+  // case x if x.endsWith(".properties") => MergeStrategy.discard
+  // case x if x.endsWith(".MF") => MergeStrategy.discard
+  // case x if x.endsWith(".class") => MergeStrategy.last
+  // case x if x.endsWith(".proto") => MergeStrategy.last
+  // case x if x.endsWith(".json") => MergeStrategy.last
+  // case x if x.endsWith(".txt") => MergeStrategy.last
+  // case x =>
+  //   val oldStrategy = (assembly / assemblyMergeStrategy).value
+  //   oldStrategy(x)
+  case PathList("META-INF", xs @ _*) if xs.map(_.toLowerCase).contains("manifest.mf") =>
+    MergeStrategy.discard
+  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.discard
+  case PathList("module-info.class") => MergeStrategy.discard // Add this line
+  case x => MergeStrategy.first
 }
 
 Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value)
