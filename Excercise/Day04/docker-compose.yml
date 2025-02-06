@@ -174,6 +174,15 @@ services:
     #   - cassandra
     networks:
       - analytics-net
+  test:
+    build:
+      context: ./test
+      dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Scala app
+    container_name: test
+    depends_on:
+      - scala-backend2
+    networks:
+      - analytics-net
 
 volumes:
   kafka_data:

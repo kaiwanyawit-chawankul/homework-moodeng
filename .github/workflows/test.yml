@@ -29,6 +29,5 @@ jobs:
     - name: Build and test with Docker Compose
       run: |
         cd ./Excercise/Day04/
-        ./infra.sh --abort-on-container-exit --exit-code-from test
-        ./test.sh
+        docker-compose up redis nginx kafka cassandra scala-backend processing-backend scala-backend2 test --abort-on-container-exit --exit-code-from test
         docker-compose down
