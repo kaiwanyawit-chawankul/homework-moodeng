@@ -10,10 +10,23 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+        docker:
+          image: docker:19.03.12
+          options: --privileged
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      # Set up Docker and Docker Compose
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
     - name: Build and test with Docker Compose
       run: |
-        docker-compose up --abort-on-container-exit --exit-code-from test
+        ./infra.sh --abort-on-container-exit --exit-code-from test
         curl -f http://localhost:8080/health || exit 1
