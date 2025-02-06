@@ -119,3 +119,7 @@ https://www.freeformatter.com/cron-expression-generator-quartz.html
 
 
 docker run --entrypoint sh <your-image-name>
+
+
+file is too big
+git config --global http.postBuffer 524288000
