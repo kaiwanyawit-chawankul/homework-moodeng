@@ -62,6 +62,7 @@ object Main {
       .build()
 
     var redis = new Jedis("redis", 6379)
+    redis.connect()
 
     val route =
       concat(
@@ -147,6 +148,7 @@ object Main {
     import scala.concurrent.Await
     import scala.concurrent.duration._
     sys.addShutdownHook{
+      redis.disconnect()
       println("Shutting down gracefully...")
       bindingFuture
         .flatMap(_.unbind()) // trigger unbinding from the port

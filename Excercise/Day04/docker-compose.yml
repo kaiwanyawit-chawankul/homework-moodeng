@@ -41,8 +41,10 @@ services:
       - "8081:8081"  # Expose the Scala backend on port 8080
     depends_on:
       #- kafka
-      # - redis
-      - cassandra
+      redis:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
     networks:
       - analytics-net
 
@@ -121,6 +123,12 @@ services:
       - "6379:6379"
     networks:
       - analytics-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 5s
 
   processing-backend:
     build:
