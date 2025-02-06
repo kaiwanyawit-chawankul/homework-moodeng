@@ -28,5 +28,7 @@ jobs:
 
     - name: Build and test with Docker Compose
       run: |
-        ./Excercise/Day04/infra.sh --abort-on-container-exit --exit-code-from test
-        curl -f http://localhost:8080/health || exit 1
+        cd ./Excercise/Day04/
+        ./infra.sh --abort-on-container-exit --exit-code-from test
+        ./test.sh
+        docker-compose down
