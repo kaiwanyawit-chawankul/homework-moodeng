@@ -29,5 +29,4 @@ jobs:
     - name: Build and test with Docker Compose
       run: |
         cd ./Excercise/Day04/
-        docker-compose up --abort-on-container-exit --exit-code-from test
-        docker-compose down
+        ./sys-test.sh

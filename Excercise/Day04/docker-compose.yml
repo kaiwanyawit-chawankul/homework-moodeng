@@ -180,7 +180,9 @@ services:
       dockerfile: Dockerfile  # Make sure this points to the Dockerfile for the Scala app
     container_name: test
     depends_on:
+      - scala-backend
       - scala-backend2
+      - nginx
     networks:
       - analytics-net
 
