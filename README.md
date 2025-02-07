@@ -33,8 +33,9 @@ TODO:
  - [x] Learn Akka
  - [ ] Learn Akka Actor
  - [x] Learn Cassandra
- - [ ] Learn Event sourcing
- - [ ] Learn Schema Registry
+ - [ ] Learn Event sourcing <- no trigger, no event driven
+ - [x] Learn Redis
+ - [ ] Learn Schema Registry <- validate schema
  - [x] Learn Proto buff
 
 
@@ -48,3 +49,5 @@ TODO:
  - [] fix logs
  - [] extract config
  - [] refactoring
+ - [] change to log4j
+ - [] add observability ->try grafana
